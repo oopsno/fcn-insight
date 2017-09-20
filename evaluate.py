@@ -34,9 +34,9 @@ def reader(root):
 
 def main():
     root = 'data/pascal/VOCdevkit/VOC2012'
-    metric = Metric(num_classes=21)
     network = 'voc-fcn8s/deploy.prototxt'
     weights = 'voc-fcn8s/fcn8s-heavy-pascal.caffemodel'
+    metric = Metric(num_classes=21)
     net = caffe.Net(network, weights, caffe.TEST)
     for i, serial, image, label in reader(root):
         print(i, serial)
@@ -44,9 +44,8 @@ def main():
         net.blobs['data'].data[...] = image
         net.forward()
         prediction = net.blobs['score'].data[0].argmax(axis=0)
-        loss = net.blobs['loss'].data[0]
-        metric.update_hist(prediction, label, loss)
-    print(metric.mean_iou())
+        metric.update_hist(prediction, label)
+    metric.report()
 
 
 if __name__ == '__main__':
