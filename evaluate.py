@@ -1,6 +1,7 @@
 # encoding: UTF-8
 
 from tombstone.core.metric import ConfusionMatrix
+import tombstone.coffin as coffin
 from PIL import Image
 import numpy as np
 import os
@@ -42,33 +43,27 @@ def parse_arg():
     ap.add_argument('--network', type=str, nargs='?')
     ap.add_argument('--weights', type=str, nargs='?')
     ap.add_argument('--num_classes', type=int, nargs='?')
-    ap.add_argument('--data', type=str, nargs='?')
     ap.add_argument('--scores', type=str, nargs='+', default=['score'])
     return ap.parse_args()
 
 
 def main():
-    import caffe
     args = parse_arg()
     root = args.vocdevkit or 'data/pascal/VOCdevkit/VOC2012'
     network = args.network or 'voc-fcn8s/deploy.prototxt'
     weights = args.weights or 'voc-fcn8s/fcn8s-heavy-pascal.caffemodel'
-    data_blob = args.data or 'data'
     num_classes = args.num_classes or 21
-    if args.gpu:
-        caffe.set_mode_gpu()
-        caffe.set_device(args.gpu)
+    if args.gpu is not None:
+        coffin.use_gpu(args.gpu)
     else:
-        caffe.set_mode_cpu()
+        coffin.use_cpu()
     metrics = {score: ConfusionMatrix(num_classes) for score in args.scores}
-    net = caffe.Net(network, weights, caffe.TEST)
+    model = coffin.Model(prototxt=network, weights=weights, phase=coffin.Phase.TEST)
     for i, serial, image, label in reader(root):
         print(i, serial)
-        net.blobs[data_blob].reshape(1, *image.shape)
-        net.blobs[data_blob].data[...] = image
-        net.forward()
+        model.feed(data=image)
         for score_blob, metric in metrics.items():
-            prediction = net.blobs[score_blob].data[0].argmax(axis=0)
+            prediction = model[score_blob][0].argmax(axis=0)
             metric.update_hist(prediction, label)
     for score_blob, metric in metrics.items():
         print(score_blob)
