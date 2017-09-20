@@ -19,7 +19,7 @@ def read_image(path):
 def read_label(path):
     label = Image.open(path)
     label = np.array(label, dtype=np.float32)
-    return label[:, :, 0]
+    return label
 
 
 def reader(root):
