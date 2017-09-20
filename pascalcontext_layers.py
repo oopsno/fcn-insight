@@ -6,6 +6,7 @@ import scipy.io
 
 import random
 
+
 class PASCALContextSegDataLayer(caffe.Layer):
     """
     Load (input image, label image) pairs from PASCAL-Context
@@ -44,8 +45,10 @@ class PASCALContextSegDataLayer(caffe.Layer):
         self.seed = params.get('seed', None)
 
         # load labels and resolve inconsistencies by mapping to full 400 labels
-        self.labels_400 = [label.replace(' ','') for idx, label in np.genfromtxt(self.context_dir + '/labels.txt', delimiter=':', dtype=None)]
-        self.labels_59 = [label.replace(' ','') for idx, label in np.genfromtxt(self.context_dir + '/59_labels.txt', delimiter=':', dtype=None)]
+        self.labels_400 = [label.replace(' ', '') for idx, label in
+                           np.genfromtxt(self.context_dir + '/labels.txt', delimiter=':', dtype=None)]
+        self.labels_59 = [label.replace(' ', '') for idx, label in
+                          np.genfromtxt(self.context_dir + '/59_labels.txt', delimiter=':', dtype=None)]
         for main_label, task_label in zip(('table', 'bedclothes', 'cloth'), ('diningtable', 'bedcloth', 'clothes')):
             self.labels_59[self.labels_59.index(task_label)] = main_label
 
@@ -57,8 +60,8 @@ class PASCALContextSegDataLayer(caffe.Layer):
             raise Exception("Do not define a bottom.")
 
         # load indices for images and labels
-        split_f  = '{}/ImageSets/Main/{}.txt'.format(self.voc_dir,
-                self.split)
+        split_f = '{}/ImageSets/Main/{}.txt'.format(self.voc_dir,
+                                                    self.split)
         self.indices = open(split_f, 'r').read().splitlines()
         self.idx = 0
 
@@ -69,7 +72,7 @@ class PASCALContextSegDataLayer(caffe.Layer):
         # randomization: seed and pick
         if self.random:
             random.seed(self.seed)
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
 
     def reshape(self, bottom, top):
         # load image + label image pair
@@ -86,7 +89,7 @@ class PASCALContextSegDataLayer(caffe.Layer):
 
         # pick next input
         if self.random:
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
         else:
             self.idx += 1
             if self.idx == len(self.indices):
@@ -105,9 +108,9 @@ class PASCALContextSegDataLayer(caffe.Layer):
         """
         im = Image.open('{}/JPEGImages/{}.jpg'.format(self.voc_dir, idx))
         in_ = np.array(im, dtype=np.float32)
-        in_ = in_[:,:,::-1]
+        in_ = in_[:, :, ::-1]
         in_ -= self.mean
-        in_ = in_.transpose((2,0,1))
+        in_ = in_.transpose((2, 0, 1))
         return in_
 
     def load_label(self, idx):

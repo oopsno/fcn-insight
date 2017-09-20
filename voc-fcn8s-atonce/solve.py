@@ -7,6 +7,7 @@ import sys
 
 try:
     import setproctitle
+
     setproctitle.setproctitle(os.path.basename(os.getcwd()))
 except:
     pass

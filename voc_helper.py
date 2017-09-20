@@ -1,6 +1,4 @@
-import os
 import copy
-import glob
 import numpy as np
 
 from PIL import Image

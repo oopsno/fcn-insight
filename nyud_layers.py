@@ -6,6 +6,7 @@ import scipy.io
 
 import random
 
+
 class NYUDSegDataLayer(caffe.Layer):
     """
     Load (input image, label image) pairs from NYUDv2
@@ -60,7 +61,7 @@ class NYUDSegDataLayer(caffe.Layer):
             raise Exception("Do not define a bottom.")
 
         # load indices for images and labels
-        split_f  = '{}/{}.txt'.format(self.nyud_dir, self.split)
+        split_f = '{}/{}.txt'.format(self.nyud_dir, self.split)
         self.indices = open(split_f, 'r').read().splitlines()
         self.idx = 0
 
@@ -71,7 +72,7 @@ class NYUDSegDataLayer(caffe.Layer):
         # randomization: seed and pick
         if self.random:
             random.seed(self.seed)
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
 
     def reshape(self, bottom, top):
         # load data for tops and  reshape tops to fit (1 is the batch dim)
@@ -86,7 +87,7 @@ class NYUDSegDataLayer(caffe.Layer):
 
         # pick next input
         if self.random:
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
         else:
             self.idx += 1
             if self.idx == len(self.indices):
@@ -117,9 +118,9 @@ class NYUDSegDataLayer(caffe.Layer):
         """
         im = Image.open('{}/data/images/img_{}.png'.format(self.nyud_dir, idx))
         in_ = np.array(im, dtype=np.float32)
-        in_ = in_[:,:,::-1]
+        in_ = in_[:, :, ::-1]
         in_ -= self.mean_bgr
-        in_ = in_.transpose((2,0,1))
+        in_ = in_.transpose((2, 0, 1))
         return in_
 
     def load_label(self, idx):
@@ -128,7 +129,8 @@ class NYUDSegDataLayer(caffe.Layer):
         Shift labels so that classes are 0-39 and void is 255 (to ignore it).
         The leading singleton dimension is required by the loss.
         """
-        label = scipy.io.loadmat('{}/segmentation/img_{}.mat'.format(self.nyud_dir, idx))['segmentation'].astype(np.uint8)
+        label = scipy.io.loadmat('{}/segmentation/img_{}.mat'.format(self.nyud_dir, idx))['segmentation'].astype(
+            np.uint8)
         label -= 1  # rotate labels
         label = label[np.newaxis, ...]
         return label
@@ -152,5 +154,5 @@ class NYUDSegDataLayer(caffe.Layer):
         im = Image.open('{}/data/hha/img_{}.png'.format(self.nyud_dir, idx))
         hha = np.array(im, dtype=np.float32)
         hha -= self.mean_hha
-        hha = hha.transpose((2,0,1))
+        hha = hha.transpose((2, 0, 1))
         return hha

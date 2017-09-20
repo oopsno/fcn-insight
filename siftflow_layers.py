@@ -6,6 +6,7 @@ import scipy.io
 
 import random
 
+
 class SIFTFlowSegDataLayer(caffe.Layer):
     """
     Load (input image, label image) pairs from SIFT Flow
@@ -49,7 +50,7 @@ class SIFTFlowSegDataLayer(caffe.Layer):
             raise Exception("Do not define a bottom.")
 
         # load indices for images and labels
-        split_f  = '{}/{}.txt'.format(self.siftflow_dir, self.split)
+        split_f = '{}/{}.txt'.format(self.siftflow_dir, self.split)
         self.indices = open(split_f, 'r').read().splitlines()
         self.idx = 0
 
@@ -60,7 +61,7 @@ class SIFTFlowSegDataLayer(caffe.Layer):
         # randomization: seed and pick
         if self.random:
             random.seed(self.seed)
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
 
     def reshape(self, bottom, top):
         # load image + label image pair
@@ -80,7 +81,7 @@ class SIFTFlowSegDataLayer(caffe.Layer):
 
         # pick next input
         if self.random:
-            self.idx = random.randint(0, len(self.indices)-1)
+            self.idx = random.randint(0, len(self.indices) - 1)
         else:
             self.idx += 1
             if self.idx == len(self.indices):
@@ -97,11 +98,12 @@ class SIFTFlowSegDataLayer(caffe.Layer):
         - subtract mean
         - transpose to channel x height x width order
         """
-        im = Image.open('{}/Images/spatial_envelope_256x256_static_8outdoorcategories/{}.jpg'.format(self.siftflow_dir, idx))
+        im = Image.open(
+            '{}/Images/spatial_envelope_256x256_static_8outdoorcategories/{}.jpg'.format(self.siftflow_dir, idx))
         in_ = np.array(im, dtype=np.float32)
-        in_ = in_[:,:,::-1]
+        in_ = in_[:, :, ::-1]
         in_ -= self.mean
-        in_ = in_.transpose((2,0,1))
+        in_ = in_.transpose((2, 0, 1))
         return in_
 
     def load_label(self, idx, label_type=None):
@@ -110,9 +112,13 @@ class SIFTFlowSegDataLayer(caffe.Layer):
         The leading singleton dimension is required by the loss.
         """
         if label_type == 'semantic':
-            label = scipy.io.loadmat('{}/SemanticLabels/spatial_envelope_256x256_static_8outdoorcategories/{}.mat'.format(self.siftflow_dir, idx))['S']
+            label = scipy.io.loadmat(
+                '{}/SemanticLabels/spatial_envelope_256x256_static_8outdoorcategories/{}.mat'.format(self.siftflow_dir,
+                                                                                                     idx))['S']
         elif label_type == 'geometric':
-            label = scipy.io.loadmat('{}/GeoLabels/spatial_envelope_256x256_static_8outdoorcategories/{}.mat'.format(self.siftflow_dir, idx))['S']
+            label = scipy.io.loadmat(
+                '{}/GeoLabels/spatial_envelope_256x256_static_8outdoorcategories/{}.mat'.format(self.siftflow_dir,
+                                                                                                idx))['S']
             label[label == -1] = 0
         else:
             raise Exception("Unknown label type: {}. Pick semantic or geometric.".format(label_type))
