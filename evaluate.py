@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from tombstone.core.metric import Metric
+from tombstone.core.metric import ConfusionMatrix
 from PIL.Image import Image
 import numpy as np
 import os
@@ -36,7 +36,7 @@ def main():
     root = 'data/pascal/VOCdevkit/VOC2012'
     network = 'voc-fcn8s/deploy.prototxt'
     weights = 'voc-fcn8s/fcn8s-heavy-pascal.caffemodel'
-    metric = Metric(num_classes=21)
+    metric = ConfusionMatrix(num_classes=21)
     net = caffe.Net(network, weights, caffe.TEST)
     for i, serial, image, label in reader(root):
         print(i, serial)
