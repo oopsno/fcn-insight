@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from tombstone.core.metric import ConfusionMatrix
-from PIL.Image import Image
+from PIL import Image
 import numpy as np
 import os
 import caffe
@@ -27,6 +27,9 @@ def reader(root):
     seg = os.path.join(root, 'SegmentationClass')
     with open('data/pascal/seg11valid.txt') as val_set:
         for i, serial in enumerate(val_set, start=1):
+            serial = serial.strip()
+            if not serial:
+                break
             image = os.path.join(jpeg, '{}.jpg'.format(serial))
             label = os.path.join(seg, '{}.png'.format(serial))
             yield i, serial, read_image(image), read_label(label)
