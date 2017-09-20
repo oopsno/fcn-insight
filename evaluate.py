@@ -4,7 +4,6 @@ from tombstone.core.metric import ConfusionMatrix
 from PIL import Image
 import numpy as np
 import os
-import caffe
 
 
 def read_image(path):
@@ -35,20 +34,45 @@ def reader(root):
             yield i, serial, read_image(image), read_label(label)
 
 
+def parse_arg():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--gpu', type=int, nargs='?')
+    ap.add_argument('--vocdevkit', type=str, nargs='?')
+    ap.add_argument('--network', type=str, nargs='?')
+    ap.add_argument('--weights', type=str, nargs='?')
+    ap.add_argument('--num_classes', type=int, nargs='?')
+    ap.add_argument('--data', type=str, nargs='?')
+    ap.add_argument('--scores', type=str, nargs='+', default=['score'])
+    return ap.parse_args()
+
+
 def main():
-    root = 'data/pascal/VOCdevkit/VOC2012'
-    network = 'voc-fcn8s/deploy.prototxt'
-    weights = 'voc-fcn8s/fcn8s-heavy-pascal.caffemodel'
-    metric = ConfusionMatrix(num_classes=21)
+    import caffe
+    args = parse_arg()
+    root = args.vocdevkit or 'data/pascal/VOCdevkit/VOC2012'
+    network = args.network or 'voc-fcn8s/deploy.prototxt'
+    weights = args.weights or 'voc-fcn8s/fcn8s-heavy-pascal.caffemodel'
+    data_blob = args.data or 'data'
+    num_classes = args.num_classes or 21
+    if args.gpu:
+        caffe.set_mode_gpu()
+        caffe.set_device(args.gpu)
+    else:
+        caffe.set_mode_cpu()
+    metrics = {score: ConfusionMatrix(num_classes) for score in args.scores}
     net = caffe.Net(network, weights, caffe.TEST)
     for i, serial, image, label in reader(root):
         print(i, serial)
-        net.blobs['data'].reshape(1, *image.shape)
-        net.blobs['data'].data[...] = image
+        net.blobs[data_blob].reshape(1, *image.shape)
+        net.blobs[data_blob].data[...] = image
         net.forward()
-        prediction = net.blobs['score'].data[0].argmax(axis=0)
-        metric.update_hist(prediction, label)
-    metric.report()
+        for score_blob, metric in metrics.items():
+            prediction = net.blobs[score_blob].data[0].argmax(axis=0)
+            metric.update_hist(prediction, label)
+    for score_blob, metric in metrics.items():
+        print(score_blob)
+        metric.report(indent=4)
 
 
 if __name__ == '__main__':
